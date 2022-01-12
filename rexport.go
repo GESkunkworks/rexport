@@ -353,6 +353,7 @@ func main() {
 		tagValue := newRandomString()
 		Loggo.Info("starting rexport session and all objects created will be tagged with", "tag-key", tagKey, "tag-value", tagValue)
 		var folios []*folio
+		na := "n/a"
 		for _, snap := range out.Snapshots {
 			var f folio
 			f.SessionTagKey = &tagKey
@@ -361,6 +362,7 @@ func main() {
 			f.SourceVolumeId = snap.VolumeId
 			f.SourceTags = snap.Tags
 			f.ShareAccountId = &conf.ShareAccountId
+			Loggo.Info("pulling info", "volumeId", *f.SourceVolumeId, "snapshotId", *f.SourceSnapshotId)
 			dvi := ec2.DescribeVolumesInput{
 				VolumeIds: []string{*f.SourceVolumeId},
 			}
@@ -368,28 +370,40 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
+			attached := false
 			for _, vol := range dvo.Volumes {
 				f.NewVolumeAz = vol.AvailabilityZone
-				for _, attachment := range vol.Attachments {
-					f.SourceMapping = attachment.Device
-					f.SourceInstanceId = attachment.InstanceId
+				if len(vol.Attachments) > 0 {
+					attached = true
+					for _, attachment := range vol.Attachments {
+						f.SourceMapping = attachment.Device
+						f.SourceInstanceId = attachment.InstanceId
+					}
+				} else {
+					f.SourceMapping = &na
+					f.SourceInstanceId = &na
 				}
 			}
-			dii := ec2.DescribeInstancesInput{
-				InstanceIds: []string{*f.SourceInstanceId},
-			}
-			dio, err := svc.DescribeInstances(context.TODO(), &dii)
-			if err != nil {
-				log.Fatal(err)
-			}
-			for _, res := range dio.Reservations {
-				for _, i := range res.Instances {
-					for _, tag := range i.Tags {
-						if *tag.Key == "Name" {
-							f.SourceInstanceName = tag.Value
+			if attached {
+				fmt.Println("here")
+				dii := ec2.DescribeInstancesInput{
+					InstanceIds: []string{*f.SourceInstanceId},
+				}
+				dio, err := svc.DescribeInstances(context.TODO(), &dii)
+				if err != nil {
+					log.Fatal(err)
+				}
+				for _, res := range dio.Reservations {
+					for _, i := range res.Instances {
+						for _, tag := range i.Tags {
+							if *tag.Key == "Name" {
+								f.SourceInstanceName = tag.Value
+							}
 						}
 					}
 				}
+			} else {
+				f.SourceInstanceName = &na
 			}
 			folios = append(folios, &f)
 			Loggo.Info("gathered info on snapshot",
