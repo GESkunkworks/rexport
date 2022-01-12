@@ -1,6 +1,8 @@
 # rexport
 Re-encrypt existing EBS snapshots with a new KMS customer managed key and share them to another AWS account
 
+![](rexport.png)
+
 # Setup
 Download a binary for your architecture from the releases tab.
 
