@@ -1,0 +1,18 @@
+
+# The AWS credentials profile you want to use for
+# the session
+aws_creds_profile: myprofile
+region: us-east-1
+
+# The new KMS key you want to encrypt the snapshots
+# with (has to be a CMK customer managed key)
+kms_key_id: 326382dc-9e4e-42ed-a198-8a6c5a80d583
+
+# The AWS account number you want to share with
+share_account_id: 813555555502
+
+# The list of existing snapshots you want to 
+# re-encrypt and share. 
+snapshots:
+    - snap-03441e3ae1370c1d1
+    - snap-0b26376a160439ec9
